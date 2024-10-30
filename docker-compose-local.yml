@@ -1,0 +1,49 @@
+version: "3"
+
+services:
+  db:
+    image: mysql:8.0
+    container_name: db_biomaster
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      MYSQL_ROOT_PASSWORD: biomaster
+      MYSQL_USER: biomaster
+      MYSQL_PASSWORD: biomaster
+      MYSQL_DATABASE: db_biomaster
+    ports:
+      - 42333:3306
+    volumes:
+      - dbdata:/var/lib/mysql
+    command: '--default-authentication-plugin=mysql_native_password'
+    networks:
+      - biomaster-network
+
+  wp:
+    depends_on:
+      - db
+    build:
+      context: ./
+      dockerfile: Dockerfile
+    container_name: wp_biomaster
+    restart: unless-stopped
+    env_file: .env
+    ports:
+      - "80:80"
+    environment:
+      WORDPRESS_DB_HOST: db:3306
+      WORDPRESS_DB_USER: biomaster
+      WORDPRESS_DB_PASSWORD: biomaster
+      WORDPRESS_DB_NAME: db_biomaster
+      XDEBUG_CONFIG: remote_host=host.docker.internal
+    volumes:
+      - ./src:/var/www/html
+      - ./src/themes/beonepage:/var/www/html/wp-content/themes/beonepage
+    networks:
+      - biomaster-network
+
+volumes:
+  dbdata:
+
+networks:
+  biomaster-network:
